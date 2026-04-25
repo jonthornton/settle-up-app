@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tagger</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Expense Tagger</h1>
+  <span class="tagline">— shared expense sorter</span>
+</header>
+
+<!-- Upload screen -->
+<div id="upload-screen" class="upload-screen">
+  <h2>Upload your transactions</h2>
+  <p class="subtitle">Drop one or more CSV exports from Bank of America, American Express, or Alliant Credit Union.</p>
+
+  <div id="drop-zone" class="drop-zone" role="button" tabindex="0" aria-label="Drop CSV files here or click to browse">
+    <span class="drop-icon">📂</span>
+    <p class="drop-label">Drop CSV files here, or click to browse</p>
+    <p class="drop-hint">Accepts multiple files at once</p>
+    <p class="drop-hint banks">Bank of America &middot; American Express &middot; Alliant Credit Union</p>
+    <input type="file" id="file-input" accept=".csv" multiple style="display:none">
+  </div>
+
+  <div id="file-list"></div>
+
+  <button id="load-btn" class="load-btn" disabled>Load transactions &rarr;</button>
+</div>
+
+<!-- Tagger screen -->
+<div id="tagger-screen" class="tagger-screen" hidden>
+
+  <div class="tagger-bar">
+    <div class="summary-block">
+      <span class="shared-total" id="shared-total">$0.00</span>
+      <span class="shared-count" id="shared-count">0 shared</span>
+    </div>
+
+    <div class="bar-spacer"></div>
+
+    <div class="kbd-hint" aria-label="Keyboard shortcuts">
+      <span><kbd>↑↓</kbd> navigate</span>
+      <span><kbd>S</kbd> toggle</span>
+      <span><kbd>F</kbd> filter</span>
+    </div>
+
+    <button id="filter-btn" class="bar-btn">Show all</button>
+    <button id="copy-btn" class="bar-btn copy-btn">Copy to Sheet</button>
+    <button id="start-over-btn" class="bar-btn start-over-btn">Start over</button>
+  </div>
+
+  <div class="tx-header" aria-hidden="true">
+    <span>Date</span>
+    <span>Description</span>
+    <span style="text-align:right">Amount</span>
+    <span></span>
+  </div>
+
+  <div id="transaction-list" class="transaction-list" role="list" aria-label="Transactions"></div>
+
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/storage.js"></script>
+<script src="js/csv-parser.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
