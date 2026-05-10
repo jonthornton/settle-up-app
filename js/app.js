@@ -279,11 +279,6 @@ function setupKeyboard() {
         e.preventDefault();
         if (state.focusedIdx >= 0) toggleShared(state.focusedIdx);
         break;
-      case 'f':
-      case 'F':
-        e.preventDefault();
-        toggleFilter();
-        break;
     }
   });
 }

@@ -81,5 +81,5 @@ when the same charge appears in two exports. There is **no deduplication**;
 showing every row deliberately enables debit/credit pair comparison.
 
 ## Keyboard
-`↑/↓` move focus, `S` or `Space` toggle shared, `F` toggle filter. Wired
+`↑/↓` move focus, `S` or `Space` toggle shared. Wired
 in `setupKeyboard()`; ignored when focus is in `INPUT`/`TEXTAREA`/`BUTTON`.
