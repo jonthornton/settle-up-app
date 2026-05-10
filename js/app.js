@@ -73,19 +73,14 @@ function renderFileList() {
 
 function loadTransactions() {
   const memory = getMerchantMemory();
-  const seen = new Set();
   const all = [];
 
   state.pendingFiles.forEach(f => {
-    f.transactions.forEach(t => {
-      const key = `${t.date}|${t.description}|${t.amount}`;
-      if (seen.has(key)) return;
-      seen.add(key);
-
+    f.transactions.forEach((t, i) => {
       const remembered = memory[t.merchantKey];
       all.push({
         ...t,
-        id: key,
+        id: `${f.filename}|${i}|${t.date}|${t.amount}`,
         isShared: remembered === true,
         autoTagged: remembered !== undefined,
       });
@@ -105,6 +100,10 @@ function loadTransactions() {
 function toDate(str) {
   const [m, d, y] = str.split('/');
   return new Date(+y, +m - 1, +d);
+}
+
+function formatAmount(n) {
+  return `${n < 0 ? '-' : ''}$${Math.abs(n).toFixed(2)}`;
 }
 
 // ── Tagger screen ────────────────────────────────────────────────────────────
@@ -139,7 +138,7 @@ function renderTransactions() {
     row.innerHTML = `
       <span class="tx-date">${escapeHtml(t.date)}</span>
       <span class="tx-desc">${escapeHtml(t.description)}${t.autoTagged ? '<span class="auto-badge" title="Auto-tagged from memory">★</span>' : ''}</span>
-      <span class="tx-amount">$${t.amount.toFixed(2)}</span>
+      <span class="tx-amount">${formatAmount(t.amount)}</span>
       <button class="tx-toggle${t.isShared ? ' is-shared' : ''}" data-idx="${realIdx}">${t.isShared ? '✓ Shared' : 'Not shared'}</button>
     `;
 
@@ -184,7 +183,7 @@ function updateSummary() {
   const shared = state.transactions.filter(t => t.isShared);
   const total = shared.reduce((s, t) => s + t.amount, 0);
   document.getElementById('shared-count').textContent = `${shared.length} shared`;
-  document.getElementById('shared-total').textContent = `$${total.toFixed(2)}`;
+  document.getElementById('shared-total').textContent = formatAmount(total);
 }
 
 function toggleFilter() {
@@ -205,7 +204,7 @@ function copyToClipboard() {
   }
   const total = shared.reduce((s, t) => s + t.amount, 0);
   const lines = shared.map(t => `${t.description}\t${t.date}\t${t.amount.toFixed(2)}`);
-  lines.push(`Total\t\t${total.toFixed(2)}`);
+  lines.push(`Total\t\t${formatAmount(total)}`);
   const text = lines.join('\n');
 
   if (navigator.clipboard) {

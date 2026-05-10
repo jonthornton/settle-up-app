@@ -100,14 +100,14 @@ function parseTransactions(text, filename) {
   const transactions = [];
 
   if (bank === 'alliant_visa') {
-    // Date,Description,Amount,Balance,Post Date — positive amounts are charges
+    // Date,Description,Amount,Balance,Post Date — CSV: positive = charge. Canonical: amount > 0 = debit, so pass through
     const dateCol = findCol(headers, 'date');
     const descCol = findCol(headers, 'description');
     const amountCol = findCol(headers, 'amount');
 
     for (const row of dataRows) {
       const amount = parseAmount(row[amountCol]);
-      if (!amount || amount <= 0) continue; // skip refunds (negative)
+      if (amount === null || amount === 0) continue;
       const desc = (row[descCol] || '').trim();
       transactions.push({
         date: normalizeDate(row[dateCol]),
@@ -118,50 +118,50 @@ function parseTransactions(text, filename) {
       });
     }
   } else if (bank === 'alliant_checking') {
-    // Date,Description,Amount,Balance — ($2.99) = withdrawal, $8598.73 = deposit
+    // Date,Description,Amount,Balance — CSV: ($x) = withdrawal, $x = deposit. Canonical: amount > 0 = debit, so negate
     const dateCol = findCol(headers, 'date');
     const descCol = findCol(headers, 'description');
     const amountCol = findCol(headers, 'amount');
 
     for (const row of dataRows) {
       const amount = parseAmount(row[amountCol]);
-      if (!amount || amount >= 0) continue; // skip deposits (positive)
+      if (amount === null || amount === 0) continue;
       const desc = (row[descCol] || '').trim();
       transactions.push({
         date: normalizeDate(row[dateCol]),
         description: desc,
-        amount: Math.abs(amount),
+        amount: -amount,
         merchantKey: normalizeMerchant(desc),
         source: filename,
       });
     }
   } else if (bank === 'bofa_credit') {
-    // Posted Date,Reference Number,Payee,Address,Amount — negative = charge, positive = refund
+    // Posted Date,Reference Number,Payee,Address,Amount — CSV: negative = charge, positive = refund. Canonical: amount > 0 = debit, so negate
     const dateCol = findCol(headers, 'posted date');
     const descCol = findCol(headers, 'payee');
     const amountCol = findCol(headers, 'amount');
 
     for (const row of dataRows) {
       const amount = parseAmount(row[amountCol]);
-      if (!amount || amount >= 0) continue; // skip refunds (positive)
+      if (amount === null || amount === 0) continue;
       const desc = (row[descCol] || '').trim();
       transactions.push({
         date: normalizeDate(row[dateCol]),
         description: desc,
-        amount: Math.abs(amount),
+        amount: -amount,
         merchantKey: normalizeMerchant(desc),
         source: filename,
       });
     }
   } else if (bank === 'amex') {
-    // Date,Description,Amount,Extended Details,... — positive = charge, negative = refund
+    // Date,Description,Amount,Extended Details,... — CSV: positive = charge, negative = credit. Canonical: amount > 0 = debit, so pass through
     const dateCol = findCol(headers, 'date');
     const amountCol = findCol(headers, 'amount');
     const descCol = findCol(headers, 'description');
 
     for (const row of dataRows) {
       const amount = parseAmount(row[amountCol]);
-      if (!amount || amount <= 0) continue; // skip refunds/credits (negative)
+      if (amount === null || amount === 0) continue;
       const desc = (row[descCol] || '').trim();
       transactions.push({
         date: normalizeDate(row[dateCol]),
@@ -172,7 +172,7 @@ function parseTransactions(text, filename) {
       });
     }
   } else {
-    // Generic fallback
+    // Generic fallback — assume amount sign as-is
     const dateCol = findCol(headers, 'date', 'posted date', 'transaction date');
     const amountCol = findCol(headers, 'amount');
     const descCol = findCol(headers, 'description', 'payee', 'memo');
@@ -180,12 +180,12 @@ function parseTransactions(text, filename) {
     if (dateCol >= 0 && amountCol >= 0) {
       for (const row of dataRows) {
         const amount = parseAmount(row[amountCol]);
-        if (!amount || amount === 0) continue;
+        if (amount === null || amount === 0) continue;
         const desc = descCol >= 0 ? (row[descCol] || '').trim() : '';
         transactions.push({
           date: normalizeDate(row[dateCol]),
           description: desc,
-          amount: Math.abs(amount),
+          amount,
           merchantKey: normalizeMerchant(desc),
           source: filename,
         });

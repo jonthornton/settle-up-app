@@ -38,3 +38,28 @@ Initial implementation had wrong detection and inverted amount logic for most ba
 - BofA credit card uses `Posted Date, Reference Number, Payee, Address, Amount` — no `Description` column; `Payee` used for display
 - BofA charges are negative; refunds are positive (opposite of initial assumption)
 - Amex charges are positive; refunds/credits are negative (initial assumption was correct)
+
+## 2026-05-09 — Normalize transaction signs and remove dedupe
+
+### Canonical sign convention
+- `amount > 0` = debit (charge/withdrawal)
+- `amount < 0` = credit (refund/deposit)
+
+### Per-bank normalization
+Updated all five parseTransactions branches (Alliant Visa, Alliant Checking, BofA Credit, Amex, unknown fallback) to:
+- Accept all transactions (removed filters that skipped credits/refunds)
+- Apply per-bank sign transforms to canonical convention:
+
+| Bank | CSV native | Transform |
+|------|-----------|-----------|
+| Alliant Visa | positive = charge | pass through |
+| Alliant Checking | parens = withdrawal, positive = deposit | negate |
+| BofA Credit | negative = charge, positive = refund | negate |
+| Amex | positive = charge, negative = credit | pass through |
+| Unknown fallback | as-is | pass through |
+
+### Removed deduplication
+Replaced `date|description|amount` dedupe with unique per-transaction id: `${filename}|${rowIndex}|${date}|${amount}`. Every row now visible, enabling side-by-side comparison of debits and matching credits.
+
+### Display formatting
+Added `formatAmount(n)` helper to normalize display: negative values show as `-$n.nn`, preserving sign visibility. Applied to row amounts, shared total, and clipboard total line. Per-row clipboard lines remain raw signed values (no $) for Sheets numeric parsing.
